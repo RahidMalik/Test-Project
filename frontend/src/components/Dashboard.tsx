@@ -37,9 +37,9 @@ import {
 } from "lucide-react";
 import type { Campaign } from "../types";
 
-// Local AI placeholder description generator
-const generateAIPlaceholderDescription = (title: string, platform: string) =>
-  `A compelling ${platform} campaign titled "${title}" with smart targeting and conversion-focused messaging.`;
+// Isay update karein
+const API_BASE_URL = "https://test-project-s92a.onrender.com/api/campaigns";
+const AI_API_URL = "https://test-project-s92a.onrender.com/api/ai/generate";
 
 const Dashboard: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -63,7 +63,7 @@ const Dashboard: React.FC = () => {
 
   const fetchCampaigns = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/campaigns");
+      const res = await axios.get(API_BASE_URL);
       setCampaigns(res.data);
     } catch (err) {
       toast.error("Failed to load campaigns");
@@ -71,19 +71,21 @@ const Dashboard: React.FC = () => {
       setLoading(false);
     }
   };
-
-  // --- AI LOGIC ---
+  // Ai logic
   const generateAIDescription = async () => {
     if (!newCampaign.title) return toast.error("Please enter a title first");
+
     setIsAiLoading(true);
     try {
-      const description = generateAIPlaceholderDescription(
-        newCampaign.title,
-        newCampaign.platform,
-      );
-      setGeneratedDescription(description);
+      const res = await axios.post(AI_API_URL, {
+        title: newCampaign.title,
+        platform: newCampaign.platform,
+      });
+
+      setGeneratedDescription(res.data.description);
       toast.success("AI Description Ready!");
     } catch (error) {
+      console.error("AI Error:", error);
       toast.error("AI Generation failed");
     } finally {
       setIsAiLoading(false);
@@ -110,17 +112,12 @@ const Dashboard: React.FC = () => {
     };
     try {
       if (editId) {
-        const res = await axios.put(
-          `http://localhost:5000/api/campaigns/${editId}`,
-          payload,
-        );
+        const res = await axios.put(`${API_BASE_URL}/${editId}`, payload);
+
         setCampaigns(campaigns.map((c) => (c.id === editId ? res.data : c)));
         toast.success("Updated!");
       } else {
-        const res = await axios.post(
-          "http://localhost:5000/api/campaigns",
-          payload,
-        );
+        const res = await axios.post(API_BASE_URL, payload);
         setCampaigns([res.data, ...campaigns]);
         toast.success("Created!");
       }
@@ -133,7 +130,7 @@ const Dashboard: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm("Delete this?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/campaigns/${id}`);
+      await axios.delete(`${API_BASE_URL}/${id}`);
       setCampaigns(campaigns.filter((c) => c.id !== id));
       toast.success("Deleted");
     } catch (err) {
@@ -172,16 +169,16 @@ const Dashboard: React.FC = () => {
     Twitter: "#14b8a6",
   };
 
-  const platformStats = ["Facebook", "Google", "LinkedIn", "Twitter"].map(
-    (p) => ({
+  const platformStats = useMemo(() => {
+    return ["Facebook", "Google", "LinkedIn", "Twitter"].map((p) => ({
       name: p,
       count: filteredCampaigns.filter((c) => c.platform === p).length,
       budget: filteredCampaigns
         .filter((c) => c.platform === p)
         .reduce((acc, c) => acc + Number(c.budget), 0),
       fill: platformColors[p],
-    }),
-  );
+    }));
+  }, [filteredCampaigns]);
 
   // Radar chart data
   const radarData = platformStats.map((p) => ({
