@@ -39,7 +39,8 @@ import type { Campaign } from "../types";
 
 // Isay update karein
 const API_BASE_URL = "https://test-project-s92a.onrender.com/api/campaigns";
-const AI_API_URL = "https://test-project-s92a.onrender.com/api/ai/generate";
+const AI_API_URL =
+  "https://test-project-s92a.onrender.com/api/ai/generate-copy";
 
 const Dashboard: React.FC = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
